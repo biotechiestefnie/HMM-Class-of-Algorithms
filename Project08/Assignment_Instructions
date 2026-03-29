@@ -1,0 +1,87 @@
+Viterbi Algorithm for Hidden Markov Models
+Your group will demonstrate your understanding of Hidden Markov Models by implementing the Viterbi algorithm for finding the most likely sequence of hidden states given a sequence of observations.
+The Viterbi algorithm represents a dynamic programming approach to decoding hidden states, offering several advantages over naive approaches:
+Key Features
+•	Optimal Path Finding: Identifies the most probable sequence of hidden states
+•	Dynamic Programming: Uses efficient tabulation to avoid redundant calculations
+•	Log-Space Computation: Prevents numerical underflow with large sequences
+•	Traceback Mechanism: Reconstructs the optimal state path after computation
+Algorithm Structure
+The Viterbi algorithm involves these key steps:
+1.	Initialization:
+o	Set up a probability matrix using initial probabilities and the first observation
+o	Initialize traceback matrix for path reconstruction
+2.	Recursion:
+o	For each position and possible state, calculate the maximum probability
+o	Store both probabilities and traceback pointers
+o	Apply transition and emission probabilities at each step
+3.	Termination:
+o	Identify the final state with the highest probability
+o	Trace back through the matrix to reconstruct the optimal path
+Applications Beyond Sequence Analysis
+While primarily used for biological sequence analysis, this approach has broader applications:
+•	Speech Recognition: Identifying phonemes in audio signals
+•	Part-of-Speech Tagging: Determining grammatical roles in text
+•	Gene Finding: Locating coding regions in DNA sequences
+Financial Modeling: Detecting Viterbi Algorithm for Hidden Markov Models
+Your group will demonstrate your understanding of Hidden Markov Models by implementing the Viterbi algorithm for finding the most likely sequence of hidden states given a sequence of observations.
+The Viterbi algorithm represents a dynamic programming approach to decoding hidden states, offering several advantages over naive approaches:
+Key Features
+•	Optimal Path Finding: Identifies the most probable sequence of hidden states
+•	Dynamic Programming: Uses efficient tabulation to avoid redundant calculations
+•	Log-Space Computation: Prevents numerical underflow with large sequences
+•	Traceback Mechanism: Reconstructs the optimal state path after computation
+Algorithm Structure
+The Viterbi algorithm involves these key steps:
+1.	Initialization:
+o	Set up a probability matrix using initial probabilities and the first observation
+o	Initialize traceback matrix for path reconstruction
+2.	Recursion:
+o	For each position and possible state, calculate the maximum probability
+o	Store both probabilities and traceback pointers
+o	Apply transition and emission probabilities at each step
+3.	Termination:
+o	Identify the final state with the highest probability
+o	Trace back through the matrix to reconstruct the optimal path
+Applications Beyond Sequence Analysis
+While primarily used for biological sequence analysis, this approach has broader applications:
+•	Speech Recognition: Identifying phonemes in audio signals
+•	Part-of-Speech Tagging: Determining grammatical roles in text
+•	Gene Finding: Locating coding regions in DNA sequences
+•	Financial Modeling: Detecting market regimes in time series data
+Computational Considerations
+Important factors to consider in implementation:
+•	Time Complexity: where is sequence length and is number of states
+•	Space Complexity: for storing the dynamic programming matrix
+•	Numerical Stability: Using log probabilities to prevent underflow
+•	Edge Cases: Handling zero probabilities with pseudocounts
+Example Data Structures
+# Example observation sequence
+obs = "GGCACTGAA"
+
+# Example initial probabilities (probability of starting in each state)
+init_probs = {
+    "I": 0.2,    beta
+    "G": 0.8
+}
+
+# Example transition probabilities (probability of moving from one state to another)
+trans_probs = {
+    "I": {"I": 0.7, "G": 0.3},
+    "G": {"I": 0.1, "G": 0.9}
+}
+
+# Example emission probabilities (probability of observing a symbol in a given state)
+emit_probs = {
+    "I": {"A": 0.1, "C": 0.4, "G": 0.4, "T": 0.1},
+    "G": {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3
+}
+This implementation provides hands-on experience with fundamental concepts in probabilistic modeling while dealing with real genomic sequence data.
+
+Notes to consider:
+•	You will only be given these four data structures
+•	No other template code or coding-by-contract will be provided
+•	It may benefit you to utlize Object-Oriented Programming (OOP) as you will be developing out the complete HMM suite throughout the HMM modules
+•	Make no assumptions as to the number of hidden states you will be given
+•	Make no assumptions as to the number of distinct observations you will be given
+•	Make no assumptions that the data structures will be modeling CpG islands (these were just examples)
