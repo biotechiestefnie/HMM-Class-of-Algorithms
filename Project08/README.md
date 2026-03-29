@@ -1,4 +1,3 @@
-Marcus’s README.md directions
 # Introduction
 Description of the project
 
