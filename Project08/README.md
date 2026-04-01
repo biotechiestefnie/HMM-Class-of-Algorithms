@@ -91,10 +91,10 @@ Application: Microsoft CoPilot
 
 Prompts:
 
-    - Given the following code, how can we tighten up the comments while still defining logic and reasoning effectively?
-    - In converting a Python script from a .py file to a Jupyter Notebook, should there be any specific additions or omissions? Is it better to place the entire script into one cell or should it be modularized in separate cells? 
-    - Where should helper functions, classes, and driver code be placed in a notebook for readability, reproducibility, and proper execution?
-    - What is the cleanest way to restructure our code to make the output matrices properly formatted?
+- Given the following code, how can we tighten up the comments while still defining logic and reasoning effectively?
+- In converting a Python script from a .py file to a Jupyter Notebook, should there be any specific additions or omissions? Is it better to place the entire script into one cell or should it be modularized in separate cells? 
+- Where should helper functions, classes, and driver code be placed in a notebook for readability, reproducibility, and proper execution?
+- What is the cleanest way to restructure our code to make the output matrices properly formatted?
 
 Justification of Use:
 AI support was used to streamline documentation and to verify that explanations were technically accurate and comprehensible. We also elicited support in formatting our output after transferring the script from a PyCharm .py file to a Jupyter Notebook because initially, the float values were not presented in scientific notation and were difficult to interpret. The long decimal values also interfered with the presentation of the optimal hidden path, making characters appear disconnected and hard to read. Based on guidance from CoPilot, we resolved this problem by restructuring the notebook, separating helper functions from the driver code, and applying a consistent formatting function to render matrices in a readable HTML table. This kept the output interpretable and aligned with our expectations for visual clarity and easily interpretable results.
