@@ -82,8 +82,11 @@ I am proud of how our team handled the debugging and refinement stages, especial
 
 ## Other members
 Eric's reflection:
- 
 As with smith-waterman, it was interesting to see how the algorithm used subproblems to solve the overall problem. Essentially the number of possible states given the emissions is a huge tree that is pruned at every forward iteration. Once we reach the end, this fixes the best probability and determines which "path" we should take back through the assigned states. Like BWT, it was a fun algorithm to work on together because there were a few twists and turns that caused us to question our thinking.
+
+
+Thu Thu's reflection:
+This week's Viterbi Algorithm was easy to follow through at first but I believe that I should have also considered the traceback process as one of the main components of the algorithm as well as I misunderstood the traceback process to take every column's max while the algorithm does not actually do that. One of the most challenging parts for me was working with Object Oriented Programming and it was the most time consuming part for me. Handling the edge cases that come up during the implementation while also debugging the indices so that we get the correct position was definitely a learning curve and I am glad I got to tackle with them now for the future projects. I am grateful to my team members for helping me with throughout the project and helping me understand the traceback process.
  
 
 # Generative AI Appendix
