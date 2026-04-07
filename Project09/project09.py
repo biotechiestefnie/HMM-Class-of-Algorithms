@@ -110,162 +110,143 @@ class HMMModel:
         return observation
     
 
-    def fwd(self, seq):
-        print(seq, "\n")
-        FWD_matrix = self.initialise_matrix(seq, 0, np.float64)
-        first_char = seq[0]
-        print(self.emit_matrix, "\n")
+    def forward_algorithm (self, observation):
+
+        #print(seq, "\n")
+        # Initializing the forward matrix with 0s
+        fwd_matrix = self.initialise_matrix(observation, 0, np.float64)
+
+        # Getting the first character from the observation sequence
+        first_char = observation[0]
+
+        #print(self.emit_matrix, "\n")
+
+        # Getting the emission prob for the first character
         initial_col = self.emit_matrix[:, first_char]
 
-        key_list = list(self.initial_probs.keys()) # setting the initial probs using the dict
-        for i in range(len(self.initial_probs)):   # need to align the keys to the index
+        key_list = list(self.initial_probs.keys())
+        #print(self.trans_matrix.inner_key_map)
+
+        for i in range(len(self.initial_probs)):
+
+            # Aligning the initial prob keys to the index
             state_i = key_list[i]
-            FWD_matrix[i, 0] = np.log(self.initial_probs[state_i]) + initial_col[i] # using np.log because of raw probabilities
-        
-        with np.printoptions(linewidth=300):
-            print(FWD_matrix)
-        
 
-    def viterbi_algorithm(self, observation):
-        """
-        Compute the most probable hidden-state sequence using the Viterbi
-        algorithm in natural log (ln) space.
+            # First column calculation
+            fwd_matrix[i, 0] = np.log(self.initial_probs[state_i]) + initial_col[i] # using np.log because of raw probabilities
 
-        Parameters:
-            observation (str): Observation sequence.
+        #print(f"states        : {self.states}")
+        #print(f"inner_key_map : {self.trans_matrix.inner_key_map}")
+        #print(f"key_list      : {key_list}")
 
-        Returns:
-            np.ndarray: Most likely sequence of hidden states.
-        """
+        for j in range(1, len(observation)):
 
-        # Validate input sequence
-        observation = self.validate_observation(observation)
+            current_char = observation[j]
 
-        num_states = len(self.states)
-        num_cols = len(observation)
+            emit_col = self.emit_matrix[:, current_char]
 
-        # Allocate DP matrix (Viterbi) with header row/column
-        viterbi_matrix = np.zeros((num_states + 1, num_cols + 1), dtype=object)
-
-        # Fill column headers with observed characters
-        for j, obs_char in enumerate(observation):
-            viterbi_matrix[0][j + 1] = obs_char
-
-        # Fill row headers with state labels
-        for i, state in enumerate(self.states):
-            viterbi_matrix[i + 1][0] = str(state)
-
-        viterbi_matrix[0][0] = ""
-
-        # Allocate traceback matrix as empty with same shape
-        traceback_matrix = np.empty((num_states + 1, num_cols + 1), dtype=object)
-
-        for j, obs_char in enumerate(observation):
-            traceback_matrix[0][j + 1] = obs_char
-
-        for i, state in enumerate(self.states):
-            traceback_matrix[i + 1][0] = str(state)
-
-        traceback_matrix[0][0] = ""
-
-        # Initialization step (first column)
-        for i, state in enumerate(self.states):
-            row = i + 1
-
-            # ln P(state)
-            initial_ln = np.log(self.initial_probs[state])
-
-            # ln P(observation[0] | state)
-            first_obs = observation[0]
-            emission_ln = np.log(self.emission_probs[state][first_obs])
-
-            # ln P(state, observation[0]) = ln(initial) + ln(emission)
-            viterbi_matrix[row][1] = initial_ln + emission_ln
-
-            # Traceback pointer is the state itself
-            traceback_matrix[row][1] = str(state)
-
-        # DP recurrence
-        for j in range(2, num_cols + 1):
-            curr_char = observation[j - 1]
+            #print(f"\n--- position j={j}, observed char='{current_char}' ---")
 
             for i, state in enumerate(self.states):
-                row = i + 1
 
-                # ln scores from previous column (all states)
-                prev_scores = viterbi_matrix[1:, j - 1].astype(float)
+                prev_scores = fwd_matrix[:, j - 1]
+                #print(f"prev='{prev_scores}' ---")
 
-                # ln P(state | prev_state) for all previous states
-                transition_lns = np.array([
-                    np.log(self.transition_probs[prev_state][state])
-                    for prev_state in self.states
-                ])
+                # column slice
+                transitions = self.trans_matrix[:, state]
 
-                # ln P(curr_char | current state)
-                emission_ln = np.log(self.emission_probs[state][curr_char])
+                emission = emit_col[i]
+                #print(f"emission={emission}")
 
-                # Candidate ln scores for each previous state
-                scores = prev_scores + transition_lns + emission_ln
+                scores = prev_scores + transitions + emission
+                #print(scores)
 
-                # Best previous state
-                best_idx = np.argmax(scores)
-                best_ln = scores[best_idx]
-                best_state = self.states[best_idx]
+                fwd_matrix[i, j] = np.logaddexp.reduce(scores)
 
-                # Store best ln probability and traceback pointer
-                viterbi_matrix[row][j] = best_ln
-                traceback_matrix[row][j] = best_state
+        print(tabulate(fwd_matrix, tablefmt="pretty"))
+        return fwd_matrix
 
-        # Termination: choose best final state
-        last_column = viterbi_matrix[1:, num_cols].astype(float)
-        last_idx = np.argmax(last_column)
-        current_state = traceback_matrix[last_idx + 1][num_cols]
+    def backward_algorithm (self, observation):
 
-        # Allocate path array
-        path = np.full(num_cols, "", dtype=object)
-        path[-1] = str(current_state)
+        # Reverse the observation sequence
+        reverse_obs = observation[::-1]
 
-        state_list = list(self.states)
+        # Initialize the backward matrix
+        bwd_matrix = self.initialise_matrix(reverse_obs, 0, np.float64)
 
-        # Traceback from last column to first
-        for j in range(num_cols - 1, -1, -1):
-            curr_label = path[j]
-            row = state_list.index(curr_label) + 1
-            col = j + 1
+        # First column of reverse matrix = 1
+        bwd_matrix[:, 0] = 0 # log(1) = 0
 
-            if j > 0:
-                path[j - 1] = str(traceback_matrix[row][col])
+        for j in range(1, len(reverse_obs)):
 
-        # Output matrices and final path
-        print(tabulate(viterbi_matrix, tablefmt="plain"))
-        print(tabulate(traceback_matrix, tablefmt="plain"))
-        print(path)
+            current_char = reverse_obs[j]
 
-        return viterbi_matrix, traceback_matrix, path
-    
+            emit_col = self.emit_matrix[:, current_char]
 
+            #print(f"\n--- position j={j}, observed char='{current_char}' ---")
+
+            for i, state in enumerate(self.states):
+
+                prev_scores = bwd_matrix[:, j - 1]
+                #print(f"prev='{prev_scores}' ---")
+
+                # column slice
+                transitions = self.trans_matrix[:, state]
+
+                emission = emit_col[i]
+                #print(f"emission={emission}")
+
+                scores = prev_scores + transitions + emission
+                #print(scores)
+
+                bwd_matrix[i, j] = np.logaddexp.reduce(scores)
+
+        # Reverse back the matrix
+        bwd_matrix = bwd_matrix[:, ::-1]
+
+        print(tabulate(bwd_matrix, tablefmt="pretty"))
+        return bwd_matrix
+
+    def forward_backward_algorithm(self, observation):
+
+        fwd_matrix = self.forward_algorithm(observation)
+        bwd_matrix = self.backward_algorithm(observation)
+
+        forward_backward_matrix = self.initialise_matrix(observation, 0, np.float64)
+
+        total_prob_fwd = np.logaddexp.reduce(fwd_matrix[:, -1])
+        total_prob_bwd = np.logaddexp.reduce(bwd_matrix[:, -1])
+        total_prob = total_prob_fwd + total_prob_bwd - 2
+
+        for j in range(0, len(observation)):
+            for i in range(0, len(self.states)):
+                forward_backward_matrix[i, j] = fwd_matrix[i, j] + bwd_matrix[i, j] - total_prob
+
+        print(tabulate(forward_backward_matrix, tablefmt="pretty"))
+        return forward_backward_matrix
 
 if __name__=="__main__":
-    obs = "GGCACTCTCGAA"
+    obs = "ATGCAA"
 
     init_probs = {
-        "I": 0.6,
-        "E": 0.4
+        "E": 0.6,
+        "I": 0.4
     }
 
     trans_probs = {
-        "I": {"I": 0.6, "G": 0.4},
-        "E": {"I": 0.4, "G": 0.6}
+        "E": {"E": 0.8, "I": 0.2},
+        "I": {"E": 0.3, "I": 0.7}
     }
 
     emit_probs = {
-        "I": {"A": 0.125, "C": 0.5, "G": 0.125, "T": 0.25},
-        "E": {"A": 0.5, "C": 0.125, "G": 0.25, "T": 0.125}
+        "E": {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3},
+        "I": {"A": 0.1, "C": 0.4, "G": 0.4, "T": 0.1}
     }
 
     model = HMMModel(init_probs, trans_probs, emit_probs)
 
-    model.fwd(obs)
+    model.forward_backward_algorithm(obs)
+
 
     # vmat, tmat, path = model.viterbi_algorithm(obs)
 
@@ -273,3 +254,14 @@ if __name__=="__main__":
     # display(show_matrix_html(tmat, float_format="{}"))
     # print(path)
 
+#Transition matrix:
+    #E        I
+#--  ------  ------
+#E - 0.223 - 1.609
+#I - 1.204 - 0.357
+
+#Emission matrix:
+        #A      C       G       T
+#--  ------  ------  ------  ------
+#E - 1.204 - 1.609 - 1.609 - 1.204
+#I - 2.303 - 0.916 - 0.916 - 2.303
