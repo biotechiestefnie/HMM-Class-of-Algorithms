@@ -249,8 +249,8 @@ if __name__=="__main__":
     obs = "GGCACTCTCGAA"
 
     init_probs = {
-        "I": 0.5,
-        "E": 0.5
+        "I": 0.6,
+        "E": 0.4
     }
 
     trans_probs = {
