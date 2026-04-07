@@ -3,14 +3,6 @@ import numpy as np
 from tabulate import tabulate
 
 
-
-
-transitions = {"I": {"I": 0.1, "G": 0.9}, 
-               "G": {"I": 0.6, "G": 0.4}}
-emissions = {"I": {"A": 0.1, "T": 0.1, "C": 0.4, "G": 0.4}, 
-             "G": {"A": 0.15, "T": 0.15, "C": 0.3, "G": 0.3}}
-
-
 class StrMatrix:
 
     def __init__(self, prob_dict, set_log=True):
@@ -69,6 +61,12 @@ class StrMatrix:
 
 
 if __name__ == "__main__":
+
+    # For debugging purposes, will not affect being run as module
+    transitions = {"I": {"I": 0.1, "G": 0.9}, 
+                   "G": {"I": 0.6, "G": 0.4}}
+    emissions = {"I": {"A": 0.1, "T": 0.1, "C": 0.4, "G": 0.4}, 
+                "G": {"A": 0.15, "T": 0.15, "C": 0.3, "G": 0.3}}
 
     TransitionMatrix = StrMatrix(transitions)
 
