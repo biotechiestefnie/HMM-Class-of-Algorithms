@@ -108,7 +108,85 @@ class HMMModel:
                 )
 
         return observation
-    
+
+    def viterbi_algorithm(self, observation):
+        """
+        Compute the most likely hidden-state sequence using the Viterbi algorithm
+        in log-space for numerical stability.
+        This implementation is fully consistent with the architectural style of
+        the Forward, Backward, and Forward-Backward algorithms. It uses:
+            self.initialise_matrix() for DP table creation
+            self.trans_matrix (StrMatrix) for transition log-probabilities
+            self.emit_matrix (StrMatrix) for emission log-probabilities
+            self.states for consistent row indexing
+            log-space arithmetic throughout
+        Parameters:
+            observation (str): Observation sequence consisting of characters from the emission alphabet
+        Returns:
+            viterbi_matrix (np.ndarray): DP matrix of shape (num_states, T) containing the best log-probabilities
+                                         for each state at each position
+            traceback_matrix (np.ndarray): Matrix of shape (num_states, T) storing the previous state label that
+                                           produced the maximum score at each position
+            path (list[str]): The most likely hidden-state sequence (Viterbi path)
+        """
+
+        # Validate observation sequence
+        observation = self.validate_observation(observation)
+
+        # Number of states and sequence length
+        num_states = len(self.states)
+        T = len(observation)
+
+        # Allocate DP matrix for log-probabilities
+        # Fill with -inf to represent impossible paths
+        vmat = self.initialise_matrix(observation, fill_value=-np.inf, dtype=np.float64)
+
+        # Allocate traceback matrix (stores state labels)
+        tmat = np.full((num_states, T), None, dtype=object)
+
+        # Initialization
+        first_char = observation[0]
+        emit_col = self.emit_matrix[:, first_char]  # log P(obs | state)
+
+        for i, state in enumerate(self.states):
+            # log P(state) + log P(first observation | state)
+            vmat[i, 0] = np.log(self.initial_probs[state]) + emit_col[i]
+            tmat[i, 0] = None  # no predecessor for first column
+
+        # Recursion
+        for t in range(1, T):
+            curr_char = observation[t]
+            emit_col = self.emit_matrix[:, curr_char]  # log P(obs_t | state)
+
+            for i, curr_state in enumerate(self.states):
+                # Previous column scores
+                prev_scores = vmat[:, t - 1]
+
+                # Transition log-probabilities into curr_state
+                trans_col = self.trans_matrix[:, curr_state]
+
+                # Candidate scores for all previous states
+                scores = prev_scores + trans_col + emit_col[i]
+
+                # Best previous state
+                best_prev_index = np.argmax(scores)
+                vmat[i, t] = scores[best_prev_index]
+                tmat[i, t] = self.states[best_prev_index]
+
+        # Best final state termination and traceback
+        last_state_index = np.argmax(vmat[:, -1])
+        path = [self.states[last_state_index]]
+
+        # Trace backward from t = T-1 down to t = 1
+        for t in range(T - 1, 0, -1):
+            prev_state = tmat[last_state_index, t]
+            path.append(prev_state)
+            last_state_index = np.where(self.states == prev_state)[0][0]
+
+        # Reverse to get left-to-right order
+        path.reverse()
+
+        return vmat, tmat, path
 
     def forward_algorithm (self, observation):
 
@@ -245,23 +323,7 @@ if __name__=="__main__":
 
     model = HMMModel(init_probs, trans_probs, emit_probs)
 
+    vmat, tmat, path = model.viterbi_algorithm(obs)
+    print("Viterbi path:", path)
+
     model.forward_backward_algorithm(obs)
-
-
-    # vmat, tmat, path = model.viterbi_algorithm(obs)
-
-    # display(show_matrix_html(vmat))
-    # display(show_matrix_html(tmat, float_format="{}"))
-    # print(path)
-
-#Transition matrix:
-    #E        I
-#--  ------  ------
-#E - 0.223 - 1.609
-#I - 1.204 - 0.357
-
-#Emission matrix:
-        #A      C       G       T
-#--  ------  ------  ------  ------
-#E - 1.204 - 1.609 - 1.609 - 1.204
-#I - 2.303 - 0.916 - 0.916 - 2.303
