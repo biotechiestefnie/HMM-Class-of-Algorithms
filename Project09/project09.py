@@ -31,8 +31,8 @@ class HMMModel:
         self.transition_probs = transition_probs
         self.emission_probs = emission_probs
 
-        # Convert states to numpy array for row indexing
-        self.states = np.array(list(initial_probs.keys()))
+        # enforce consistent, predictable state order
+        self.states = np.array(sorted(initial_probs.keys()))
 
         # Infer emission alphabet from first state
         first_state = next(iter(emission_probs))

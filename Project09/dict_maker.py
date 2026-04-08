@@ -27,6 +27,10 @@ class StrMatrix:
         first_key = outer_keys[0]
         inner_keys = list(prob_dict[first_key].keys())
 
+        # ordered list of row labels extracted from outer/inner dictionary keys
+        self.row_labels = outer_keys
+        self.col_labels = inner_keys
+
         # Map string keys to matrix indices
         self.outer_key_map = {v: i for i, v in enumerate(outer_keys)}  # row mapping
         self.inner_key_map = {v: i for i, v in enumerate(inner_keys)}  # column mapping
