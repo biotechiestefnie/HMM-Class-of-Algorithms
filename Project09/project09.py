@@ -236,7 +236,7 @@ class HMMModel:
         bwd_matrix = self.initialise_matrix(reverse_obs, 0, np.float64)
 
         # First column of reverse matrix = 1
-        bwd_matrix[:, 0] = 1  # log(1) = 0
+        bwd_matrix[:, 0] = 0  # log(1) = 0
 
         for j in range(1, len(reverse_obs)):
             current_char = reverse_obs[j]
@@ -271,14 +271,15 @@ class HMMModel:
 
         forward_backward_matrix = self.initialise_matrix(observation, 0, np.float64)
 
+        # compute the average of the last and first columns
         total_prob_fwd = np.logaddexp.reduce(fwd_matrix[:, -1])
-        total_prob_bwd = np.logaddexp.reduce(bwd_matrix[:, -1])
+        total_prob_bwd = np.logaddexp.reduce(bwd_matrix[:, 0])
         total_prob = total_prob_fwd + total_prob_bwd - 2
 
-        for j in range(0, len(observation)):
-            for i in range(0, len(self.states)):
-                forward_backward_matrix[i, j] = fwd_matrix[i, j] + bwd_matrix[i, j] - total_prob
+        # vectorized operation to do all calculations
+        forward_backward_matrix = (fwd_matrix + bwd_matrix) - total_prob
 
+        # grab the state indices from the matrix using argmax
         state_indices = np.argmax(forward_backward_matrix, axis=0)
 
         return self.states[state_indices], forward_backward_matrix
