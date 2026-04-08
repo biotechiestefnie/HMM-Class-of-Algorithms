@@ -40,7 +40,40 @@ across multiple paths requires the logaddexp operation rather than standard summ
 
 # Pseudocode
 
-```
+```python
+
+function fwd:
+    initialize zeros matrix of size n_states x observations
+    
+    find first_col probabilities
+    
+    for col in remaining cols:
+        for state in states:
+            matrix[row][col] = log_sum_exp(prev_score[row][prev_col] * transition_matrix[state][row] * emission_matrix[state][observation])
+    
+    return matrix, log_sum_exp(matrix[last_column])
+
+
+function bwd:
+    initialize zeros matrix of size n_states x observations
+    reverse observations
+    
+    set first col to 0 (which is a probability of 1)
+    
+    for col in remaining cols: # same loop as the first time except everything is backwards and the start is 1
+        for state in states:
+            matrix[row][col] = log_sum_exp(prev_score[row][prev_col] * transition_matrix[state][row] * emission_matrix[state][observation])
+    
+    return matrix
+
+function fwd-bwd:
+
+    FWD, P_seq = fwd
+    BWD = bwd
+
+    G = (FWD * BWD) / P_seq
+
+    return states associated with argmax of each column
 
 ```
 
@@ -115,7 +148,9 @@ needed help from my group to visualize how outer keys map to rows and inner keys
 StrMatrix) also exposed gaps in my OOP understanding, particularly around accessing attributes from one class inside another. But since the 
 backward is similar to the forward algorithm once we got the forward implemented the rest was a breeze to go through. 
 
-Eric Arnold: 
+Eric Arnold: This algorithm was a great opportunity to get familiar with matrices. It was fun to play around with string indexing and make that a separate object to abstract away the column indexing. We used this to refactor our viterbi away from dicts to matrix manipulations. In the future, we can add slicing to this to increase the functionality.
+
+Another point of interest was the mathematic theory of the fwd and bwd algorithm itself. Its use of adding is interesting. After some investigating, it seems that we need to accumulate the probabilities because we are trying to figure out what the current hidden state is given all previous states. Instead of choosing the maximum probability, we are treating them as independent events and summing up the total probability. I thought we were integrating somehow (due to taking the log of a product), but that doesn't really make sense because the function also works in normal probaiblity space. I really appreciate working through baysian theory in this way as I haven't had an opportunity to do that before.
 
 # Generative AI Appendix
-As per the syllabus
+Some AI used for numpy; formatting print statements.
