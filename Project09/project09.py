@@ -1,21 +1,6 @@
-from IPython.display import HTML
-from tabulate import tabulate
-import numpy as np
+# Import statements
+import numpy as np  # for using numpy arrays as matrices
 from dict_maker import StrMatrix
-
-def show_matrix_html(matrix, float_format="{:.3e}"):
-    formatted = []
-    for row in matrix:
-        new_row = []
-        for cell in row:
-            if isinstance(cell, float):
-                new_row.append(float_format.format(cell))
-            else:
-                new_row.append(str(cell))
-        formatted.append(new_row)
-
-    return HTML(tabulate(formatted, tablefmt="html"))
-
 
 
 class HMMModel:
@@ -23,7 +8,6 @@ class HMMModel:
     Hidden Markov Model for computing the most likely hidden-state sequence
     given an observation sequence, using natural log (ln) probabilities for
     numerical stability and underflow prevention.
-
     Attributes:
         initial_probs (dict): Probability of starting in each state.
         transition_probs (dict:dict): Transition probabilities between states.
@@ -36,7 +20,6 @@ class HMMModel:
         """
         Initialize HMM model with probability tables and validate a consistent
         emission alphabet across all states.
-
         Parameters:
             initial_probs (dict): Starting-state probability table.
             transition_probs (dict:dict): Transition probability table.
@@ -65,12 +48,20 @@ class HMMModel:
 
         # Store validated alphabet for model-level invariants
         self.valid_chars = alphabet
-
         self.trans_matrix = StrMatrix(transition_probs)
         self.emit_matrix = StrMatrix(emission_probs)
 
 
     def initialise_matrix(self, observation, fill_value, dtype):
+        """
+        Initialize a DP matrix for a given observation sequence to be used by each algorithm
+        Parameters:
+            observation (str): Observation sequence
+            fill_value (float): Initial fill value for all cells
+            dtype (type): Numpy dtype for the matrix
+        Returns:
+            np.ndarray: Matrix of shape (num_states, len(observation))
+        """
 
         # validate the observation sequence
         observation = self.validate_observation(observation)
@@ -84,48 +75,41 @@ class HMMModel:
         matrix = np.full((num_states, num_cols), fill_value, dtype=dtype)
 
         return matrix
-    
+
 
     def validate_observation(self, observation):
         """
         Validate that all characters in the observation sequence belong to the
         model's emission alphabet.
-
         Parameters:
-            observation (str): Raw input sequence.
-
+            observation (str): Raw input sequence
         Returns:
-            str: Same sequence if valid.
-
+            observation (str): Same sequence if valid
         Raises:
-            ValueError: If any character is not in valid_chars.
+            ValueError: If any character is not in valid_chars
         """
-
+        # Compare observation sequence to valid characters
         for c in observation:
             if c not in self.valid_chars:
+                # If nonvalid character identified, raise error
                 raise ValueError(
                     f"Invalid observed character '{c}' not in valid alphabet {self.valid_chars}"
                 )
-
+        # Return observation string if no invalid characters identified
         return observation
+
 
     def viterbi_algorithm(self, observation):
         """
-        Compute the most likely hidden-state sequence using the Viterbi algorithm
-        in log-space for numerical stability.
-        This implementation is fully consistent with the architectural style of
-        the Forward, Backward, and Forward-Backward algorithms. It uses:
-            self.initialise_matrix() for DP table creation
-            self.trans_matrix (StrMatrix) for transition log-probabilities
-            self.emit_matrix (StrMatrix) for emission log-probabilities
-            self.states for consistent row indexing
-            log-space arithmetic throughout
+        Compute the overall optimal hidden-state sequence path using the Viterbi algorithm
+        in log-space for numerical stability. Uses dynamic programming for traceback matrix
+        to identify optimal sequence.
         Parameters:
             observation (str): Observation sequence consisting of characters from the emission alphabet
         Returns:
-            viterbi_matrix (np.ndarray): DP matrix of shape (num_states, T) containing the best log-probabilities
+            vmat (np.ndarray): DP matrix of shape (num_states, T) containing the best log-probabilities
                                          for each state at each position
-            traceback_matrix (np.ndarray): Matrix of shape (num_states, T) storing the previous state label that
+            tmat (np.ndarray): Matrix of shape (num_states, T) storing the previous state label that
                                            produced the maximum score at each position
             path (list[str]): The most likely hidden-state sequence (Viterbi path)
         """
@@ -151,7 +135,7 @@ class HMMModel:
         for i, state in enumerate(self.states):
             # log P(state) + log P(first observation | state)
             vmat[i, 0] = np.log(self.initial_probs[state]) + emit_col[i]
-            tmat[i, 0] = None  # no predecessor for first column
+            tmat[i, 0] = str(state)
 
         # Recursion
         for t in range(1, T):
@@ -166,16 +150,16 @@ class HMMModel:
                 trans_col = self.trans_matrix[:, curr_state]
 
                 # Candidate scores for all previous states
-                scores = prev_scores + trans_col + emit_col[i]
+                scores = prev_scores + trans_col
 
                 # Best previous state
                 best_prev_index = np.argmax(scores)
-                vmat[i, t] = scores[best_prev_index]
-                tmat[i, t] = self.states[best_prev_index]
+                vmat[i, t] = scores[best_prev_index] + emit_col[i]
+                tmat[i, t] = str(self.states[best_prev_index])
 
         # Best final state termination and traceback
         last_state_index = np.argmax(vmat[:, -1])
-        path = [self.states[last_state_index]]
+        path = [str(self.states[last_state_index])]
 
         # Trace backward from t = T-1 down to t = 1
         for t in range(T - 1, 0, -1):
@@ -186,65 +170,64 @@ class HMMModel:
         # Reverse to get left-to-right order
         path.reverse()
 
+        # Force traceback matrix to plain Python strings for clean display
+        tmat = np.vectorize(str)(tmat)
+
         return vmat, tmat, path
 
-    def forward_algorithm (self, observation):
 
-        #print(seq, "\n")
-        # Initializing the forward matrix with 0s
+
+
+    def forward_algorithm(self, observation):
+        """
+        Compute the forward (alpha) matrix in log-space.
+        Parameters:
+            observation (str): Observation sequence.
+        Returns:
+            fwd_matrix (np.ndarray): Forward probability matrix.
+        """
+
+        # Initialise the forward matrix with 0s
         fwd_matrix = self.initialise_matrix(observation, 0, np.float64)
 
         # Getting the first character from the observation sequence
         first_char = observation[0]
 
-        #print(self.emit_matrix, "\n")
-
         # Getting the emission prob for the first character
         initial_col = self.emit_matrix[:, first_char]
 
         key_list = list(self.initial_probs.keys())
-        #print(self.trans_matrix.inner_key_map)
 
         for i in range(len(self.initial_probs)):
-
             # Aligning the initial prob keys to the index
             state_i = key_list[i]
-
             # First column calculation
-            fwd_matrix[i, 0] = np.log(self.initial_probs[state_i]) + initial_col[i] # using np.log because of raw probabilities
-
-        #print(f"states        : {self.states}")
-        #print(f"inner_key_map : {self.trans_matrix.inner_key_map}")
-        #print(f"key_list      : {key_list}")
+            # using np.log because of raw probabilities and to prevent underflow
+            fwd_matrix[i, 0] = np.log(self.initial_probs[state_i]) + initial_col[i]
 
         for j in range(1, len(observation)):
-
             current_char = observation[j]
-
             emit_col = self.emit_matrix[:, current_char]
 
-            #print(f"\n--- position j={j}, observed char='{current_char}' ---")
-
             for i, state in enumerate(self.states):
-
                 prev_scores = fwd_matrix[:, j - 1]
-                #print(f"prev='{prev_scores}' ---")
-
                 # column slice
                 transitions = self.trans_matrix[:, state]
-
                 emission = emit_col[i]
-                #print(f"emission={emission}")
-
                 scores = prev_scores + transitions + emission
-                #print(scores)
-
                 fwd_matrix[i, j] = np.logaddexp.reduce(scores)
 
-        print(tabulate(fwd_matrix, tablefmt="pretty"))
         return fwd_matrix
 
-    def backward_algorithm (self, observation):
+
+    def backward_algorithm(self, observation):
+        """
+        Compute the backward (beta) matrix in log-space.
+        Parameters:
+            observation (str): Observation sequence.
+        Returns:
+            bwd_matrix (np.ndarray): Backward probability matrix.
+        """
 
         # Reverse the observation sequence
         reverse_obs = observation[::-1]
@@ -253,39 +236,35 @@ class HMMModel:
         bwd_matrix = self.initialise_matrix(reverse_obs, 0, np.float64)
 
         # First column of reverse matrix = 1
-        bwd_matrix[:, 0] = 0 # log(1) = 0
+        bwd_matrix[:, 0] = 0  # log(1) = 0
 
         for j in range(1, len(reverse_obs)):
-
             current_char = reverse_obs[j]
-
             emit_col = self.emit_matrix[:, current_char]
 
-            #print(f"\n--- position j={j}, observed char='{current_char}' ---")
-
             for i, state in enumerate(self.states):
-
                 prev_scores = bwd_matrix[:, j - 1]
-                #print(f"prev='{prev_scores}' ---")
-
                 # column slice
                 transitions = self.trans_matrix[:, state]
-
                 emission = emit_col[i]
-                #print(f"emission={emission}")
-
                 scores = prev_scores + transitions + emission
-                #print(scores)
-
                 bwd_matrix[i, j] = np.logaddexp.reduce(scores)
 
         # Reverse back the matrix
         bwd_matrix = bwd_matrix[:, ::-1]
 
-        print(tabulate(bwd_matrix, tablefmt="pretty"))
         return bwd_matrix
 
+
     def forward_backward_algorithm(self, observation):
+        """
+        Compute posterior state probabilities using the Forward-Backward algorithm.
+        Parameters:
+            observation (str): Observation sequence.
+        Returns:
+            np.ndarray: Most likely state at each position.
+            forward_backward_matrix (np.ndarray): Posterior probability matrix
+                """
 
         fwd_matrix = self.forward_algorithm(observation)
         bwd_matrix = self.backward_algorithm(observation)
@@ -300,32 +279,6 @@ class HMMModel:
             for i in range(0, len(self.states)):
                 forward_backward_matrix[i, j] = fwd_matrix[i, j] + bwd_matrix[i, j] - total_prob
 
-        print(tabulate(forward_backward_matrix, tablefmt="pretty"))
-
         state_indices = np.argmax(forward_backward_matrix, axis=0)
-        return self.states[state_indices]
 
-if __name__=="__main__":
-    obs = "ATGCAA"
-
-    init_probs = {
-        "E": 0.6,
-        "I": 0.4
-    }
-
-    trans_probs = {
-        "E": {"E": 0.8, "I": 0.2},
-        "I": {"E": 0.3, "I": 0.7}
-    }
-
-    emit_probs = {
-        "E": {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3},
-        "I": {"A": 0.1, "C": 0.4, "G": 0.4, "T": 0.1}
-    }
-
-    model = HMMModel(init_probs, trans_probs, emit_probs)
-
-    vmat, tmat, path = model.viterbi_algorithm(obs)
-    print("Viterbi path:", path)
-
-    model.forward_backward_algorithm(obs)
+        return self.states[state_indices], forward_backward_matrix
