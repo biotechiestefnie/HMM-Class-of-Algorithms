@@ -1,0 +1,156 @@
+# Introduction
+This week’s project extends the Hidden Markov Model Viterbi implementation from last week by adding the Forward algorithm, 
+Backward algorithm, and Forward-Backward algorithm within the same object-oriented class structure. While the Viterbi 
+algorithm computes the overall optimal hidden state sequence, the Forward-Backward algorithm computes the posterior 
+probability of being in each hidden state at every position in the observation sequence, given the full observation.
+
+The Forward algorithm fills a matrix of shape (n_states x length of observation) from left to right. The first column 
+is filled using the initial state probabilities and the emission probability of the first observed character. Each cell 
+in the matrix is computed by summing over all previous states, combining the previous forward score, the transition 
+log-probability into the current state, and the emission log-probability of the current observed character, 
+using np.logaddexp.reduce to sum in log space.
+
+The Backward algorithm does the same computation as the Forward algorithm but traverses the observation sequence from 
+right to left. To implement this cleanly, the observation sequence is reversed, and the backward matrix is filled left 
+to right from the reversed sequence, then flipped back to the original column order at the end. Both forward and backward
+algorithm matrices are called upon to complete the Forward-Backward approach, which yields a more robust probability
+result for each hidden state in the observation sequence since the calculation is taking into account the probabilities
+generated from both directions.
+
+The Forward-Backward algorithm combines both the forward and backward matrices to compute the posterior probability of each 
+state at each position in the final forward-backward matrix. For each cell (i, j) in the forward backward matrix, the posterior 
+is computed as the sum of the log- forward score and log- backward score at that position, minus the total log-probability of the 
+observation sequence. The total log-probability is obtained by applying np.logaddexp.reduce to the last column of either the forward 
+matrix or backwards matrix.
+
+A key addition to our object-oriented approach this week is the StrMatrix class, which handles the conversion of nested 
+probability dictionaries into NumPy matrices while preserving the key-to-index mapping. In the original dictionary structure 
+of the emission dictionary, the outer key specifies the row, and the inner key specifies the column. StrMatrix constructs two 
+encoding dictionaries: outer_key_map and inner_key_map, that map each string key to its corresponding integer index. This allows 
+the probability matrices to be stored as pure NumPy arrays and indexed by integer position at runtime, avoiding string-based 
+dictionary lookups inside the loops of the dynamic programming algorithms. The transition and emission probability tables are 
+both converted through StrMatrix at initialisation, and the resulting matrix objects are stored as self.trans_matrix and 
+self.emit_matrix respectively. 
+
+All probability calculations are performed in natural log space for the same reasons as the Viterbi algorithm- to avoid 
+numerical underflow from repeated multiplication of small decimal probabilities. In log space, summing probabilities 
+across multiple paths requires the logaddexp operation rather than standard summation.
+  
+
+
+# Pseudocode
+
+```python
+
+function fwd:
+    initialize zeros matrix of size n_states x observations
+    
+    find first_col probabilities
+    
+    for col in remaining cols:
+        for state in states:
+            matrix[row][col] = log_sum_exp(prev_score[row][prev_col] * transition_matrix[state][row] * emission_matrix[state][observation])
+    
+    return matrix, log_sum_exp(matrix[last_column])
+
+
+function bwd:
+    initialize zeros matrix of size n_states x observations
+    reverse observations
+    
+    set first col to 0 (which is a probability of 1)
+    
+    for col in remaining cols: # same loop as the first time except everything is backwards and the start is 1
+        for state in states:
+            matrix[row][col] = log_sum_exp(prev_score[row][prev_col] * transition_matrix[state][row] * emission_matrix[state][observation])
+    
+    return matrix
+
+function fwd-bwd:
+
+    FWD, P_seq = fwd
+    BWD = bwd
+
+    G = (FWD * BWD) / P_seq
+
+    return states associated with argmax of each column
+
+```
+
+# Successes
+We successfully converted the input data structure from dictionary to a matrix, so it is easier to get the probabilities 
+and broadcast them instead of looping inside a dictionary whenever we get the probabilities for calculations.
+
+# Struggles
+Expanding last week’s HMMModel into a full multi‑algorithm implementation turned out to be far more difficult than expected 
+because the original design simply wasn’t built to support anything beyond Viterbi. The earlier version mixed state labels, 
+probability lookups, and dynamic‑programming logic in a way that worked for a single algorithm but collapsed the moment we 
+tried to add Forward, Backward, and Forward–Backward. The DP matrix was created manually inside Viterbi with hard‑coded shapes 
+and mixed data types, so every new method would have needed to re‑implement its own version of the same logic, guaranteeing 
+duplication and inconsistent behavior. The probability structures were stored as nested dictionaries, which made vectorized 
+operations impossible and forced slow, deeply nested loops that were incompatible with the mathematical structure of the 
+Forward and Backward recursions. Even the traceback logic was tightly coupled to Viterbi’s DP layout, which meant the class 
+had no clean separation between probability storage, matrix initialization, and algorithm‑specific behavior. As soon as we 
+tried to extend the class, these structural limitations surfaced immediately and repeatedly.
+
+The first attempts to “patch in” Forward and Backward made this even clearer. Each algorithm needed its own initialization rules, 
+recursion rules, and termination rules, but the class had no shared mechanism for allocating a clean numeric matrix. The original 
+Viterbi matrix even stored headers inside the matrix itself, which made it unusable for any algorithm that required pure numeric 
+values. The dictionary‑based probability storage also became a major bottleneck, because Forward and Backward require fast 
+column‑wise access and consistent log‑space arithmetic, neither of which is feasible with nested dicts. Every attempt to extend 
+the class resulted in duplicated code, shape mismatches, and inconsistent behavior across algorithms. It became obvious that the 
+only viable path forward was a structural rewrite rather than incremental patching.
+
+The turning point was introducing a dedicated matrix‑initialization method that every algorithm could rely on. By centralizing the 
+creation of DP matrices through a single initialise_matrix function, we eliminated the repeated shape logic, enforced consistent 
+log‑space initialization, and ensured that all algorithms operated on clean, numeric matrices without embedded labels. This also 
+allowed us to modularize the probability structures by moving all preprocessing into a separate module containing the 
+dictionary‑maker and the string‑to‑matrix converter. That module standardized the ordering of states and symbols, converted all 
+probabilities into log‑space matrices, and provided the fast, vectorized access patterns required by Forward, Backward, and 
+Forward–Backward. Once these pieces were in place, the algorithms themselves became dramatically cleaner, more consistent, and 
+easier to maintain.
+
+Even after the algorithms were correct, we continued to struggle with output formatting, especially when trying to prepare the 
+notebook for GitHub. NumPy object arrays always display their internal representation (np.str_('G')) when printed directly, even 
+when the underlying values are plain Python strings, which made the traceback matrices look messy and vertical. Jupyter’s HTML 
+rendering made the matrices look clean inside the notebook, but GitHub strips HTML and collapses whitespace, so the beautifully 
+formatted tables we saw locally were reduced to raw arrays in the repository. We also ran into persistent issues with stale variables 
+and out‑of‑order cell execution, which made debugging formatting problems harder than debugging the algorithms themselves. By the time 
+the algorithms, matrices, and module structure were fully correct, we simply ran out of time to implement a GitHub‑friendly fallback 
+renderer or fully resolve the display inconsistencies. The core computational work was completed successfully, but the formatting layer 
+remained partially unresolved due to time constraints and the inherent limitations of how GitHub renders Jupyter output.
+ 
+
+# Personal Reflections
+## Group Leader
+Stefanie Moreno: As group leader, this project pushed me to navigate both the technical and organizational challenges of expanding last 
+week’s HMMModel into a fully modular, multi‑algorithm implementation. What initially looked like a small extension quickly revealed deep 
+structural limitations in the earlier design, and guiding the team through that realization was a major part of my role. We discovered 
+that the original class simply wasn’t built to support Forward, Backward, or Forward–Backward, and every attempt to patch new functionality 
+onto the old structure created more inconsistencies and duplicated logic. Recognizing that incremental fixes were only making the code harder 
+to maintain, I made the call for us to step back and redesign the class around shared components, especially a unified matrix‑initialization 
+method that all algorithms could rely on. That decision ended up being the turning point: once we centralized the DP matrix creation and moved 
+probability preprocessing into a separate module, the algorithms became cleaner, more consistent, and far easier for everyone to work with.
+
+Leading the team through this rewrite also meant balancing progress with clarity. We had to rethink how probabilities were stored, how matrices 
+were shaped, and how to keep the class general enough to support multiple algorithms without collapsing under its own complexity. I spent a lot 
+of time helping the group understand why vectorization mattered, why log‑space arithmetic had to be consistent, and why modularity wasn’t just 
+a design preference but a requirement for correctness. Even after the algorithms were working, we continued to struggle with formatting and 
+display issues — especially NumPy’s object‑array behavior and GitHub’s refusal to render our HTML‑based matrix displays. These weren’t conceptual 
+errors but practical limitations of the tools we were using, and despite our best efforts, we ran out of time to fully resolve the GitHub 
+formatting layer. Still, I’m proud of how the team handled the complexity: we stayed focused, adapted when the original plan stopped working, and 
+ultimately produced a much more robust and extensible model than the one we started with.
+
+## Other member
+Thu Thu Han: I think this week project was not that different in terms of implementations compared to last week so I wanted to challenge myself 
+a little bit. The biggest learning curve was converting nested dictionaries to NumPy matrices while preserving the key-to-index mapping. I 
+needed help from my group to visualize how outer keys map to rows and inner keys map to columns. Working across two classes (HMMModel and 
+StrMatrix) also exposed gaps in my OOP understanding, particularly around accessing attributes from one class inside another. But since the 
+backward is similar to the forward algorithm once we got the forward implemented the rest was a breeze to go through. 
+
+Eric Arnold: This algorithm was a great opportunity to get familiar with matrices. It was fun to play around with string indexing and make that a separate object to abstract away the column indexing. We used this to refactor our viterbi away from dicts to matrix manipulations. In the future, we can add slicing to this to increase the functionality.
+
+Another point of interest was the mathematic theory of the fwd and bwd algorithm itself. Its use of adding is interesting. After some investigating, it seems that we need to accumulate the probabilities because we are trying to figure out what the current hidden state is given all previous states. Instead of choosing the maximum probability, we are treating them as independent events and summing up the total probability. I thought we were integrating somehow (due to taking the log of a product), but that doesn't really make sense because the function also works in normal probaiblity space. I really appreciate working through baysian theory in this way as I haven't had an opportunity to do that before.
+
+# Generative AI Appendix
+Some AI used for numpy; formatting print statements.
