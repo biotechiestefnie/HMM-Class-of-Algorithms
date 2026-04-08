@@ -236,7 +236,7 @@ class HMMModel:
         bwd_matrix = self.initialise_matrix(reverse_obs, 0, np.float64)
 
         # First column of reverse matrix = 1
-        bwd_matrix[:, 0] = 0  # log(1) = 0
+        bwd_matrix[:, 0] = 1  # log(1) = 0
 
         for j in range(1, len(reverse_obs)):
             current_char = reverse_obs[j]
