@@ -301,7 +301,9 @@ class HMMModel:
                 forward_backward_matrix[i, j] = fwd_matrix[i, j] + bwd_matrix[i, j] - total_prob
 
         print(tabulate(forward_backward_matrix, tablefmt="pretty"))
-        return forward_backward_matrix
+
+        state_indices = np.argmax(forward_backward_matrix, axis=0)
+        return self.states[state_indices]
 
 if __name__=="__main__":
     obs = "ATGCAA"
