@@ -56,11 +56,11 @@ This has been encountered and documented, but most people think it's their code,
 issue, or a GitHub issue, rather than realizing it is due to Jupyter Notebook's output ordering. What
 is really happening though is that it is a side effect of how MIME bundles are merged.
 
-This quirk bothered me, so I tested numerous approaches and finally identified a simple, reliable fix. 
-After the final plain text line in the cell, I added the following: print("") . The print statement 
-must occur inside the cell where the HTML block is followed by a plain text object as the final line 
-in the cell. This results in an IPython flush, in which the HTML MIME block is closed, the display context 
-is reset, and the next output is treated as plain text, rendering the plain text object horizontally as 
-expected, without numerous additional lines of code or added output cluttering the notebook.
+This quirk bothered me, so I tested numerous approaches and finally identified a simple, reliable fix.
+I realized that directly calling the print statement with my string path was the only way to override the
+MIME prioritization and force the HTML block to close, reset the display context, and have IPython
+render the plain text object horizontally as desired. This approach prevents clutter imposed by
+fixes that involve numerous additional lines of code or unnecessary output in the notebook. 
+
 
 
