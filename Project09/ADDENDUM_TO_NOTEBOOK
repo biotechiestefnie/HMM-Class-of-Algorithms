@@ -1,3 +1,4 @@
+## A Tale of a Bug...
 While creating our Jupyter for Project09, I encountered a known quirk of IPython that is known to 
 manifest in Jupyter Notebook, JupyterLab, VSCode, GitHub, and Pycharm. When HTML output is combined 
 with plain text in a notebook cell and the final line is a string, this line gets rendered 
