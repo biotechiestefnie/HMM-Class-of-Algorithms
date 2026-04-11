@@ -1,0 +1,66 @@
+A Tale of a Bug...
+
+While creating our Jupyter for Project09, I encountered a quirk of IPython that is known to 
+manifest in Jupyter Notebook, JupyterLab, VSCode, GitHub, and Pycharm. When HTML output is combined 
+with plain text in a notebook cell and the final line is a string, this line gets rendered 
+vertically rather than intended. More specifically, this bug triggers when all of the following
+are true:
+
+1. the cell outputs HTML 
+  - examples include:
+    * display(HTML(...))
+    * tabulate
+    * pandas HTML tables
+2. the cell then outputs a plain text object
+  - examples include:
+    * a Python list
+    * a Python string
+    * a NumPy array repr
+    * a sequence of characters
+    * anything that Jupyter renders using the plain-text MIME type
+3. that plain text object is the final expression in the cell
+
+In these circumstances, Jupyter renders the plain-text output vertically, treating the list/string
+as a column vector.
+
+Rather than: ['I', 'E', 'I', 'I', 'I', 'E', 'E']
+
+The output yields:   'I'
+                     'E'
+                     'I'
+                     'I'
+                     'I'
+                     'I'
+                     'E'
+                     'E'
+
+Even though the object and formatting are correct.
+
+This occurs because in many frontends, IPython has a display priority:
+1. HTML
+2. Markdown
+3. JSON
+4. Plain text
+
+When HTML is emitted, the frontend (Notebook/Lab/Pycharm/VSCode/GitHub) enters a "rich display mode".
+If the next output is plain text and it is the final expression, the frontend:
+- inherits the HTML block's layout content
+- treats the text as a vertical list
+- collapses it into a column
+
+IPython controls MIME-type priority, display ordering, how HTML versus plain text is emitted, how rich
+display overrides repr(), and how output blocks are merged. When HTML output is emitted, the next plain
+text output can inherit the HTML renderer's layout context unless a flush occurs.
+
+This has been encountered and documented, but most people think it's their code, a formatting bug, a NumPy
+issue, or a GitHub issue, rather than realizing it is due to Jupyter Notebook's output ordering. What
+is really happening though is that it is a side effect of how MIME bundles are merged.
+
+This quirk bothered me, so I tested numerous approaches and finally identified a simple, reliable fix.
+I realized that directly calling the print statement with my string path was the only way to override the
+MIME prioritization and force the HTML block to close, reset the display context, and have IPython
+render the plain text object horizontally as desired. This approach prevents clutter imposed by
+fixes that involve numerous additional lines of code or unnecessary output in the notebook. 
+
+
+
