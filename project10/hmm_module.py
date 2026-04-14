@@ -404,13 +404,9 @@ Available methods: {dir(HMMModel)}
                     if j < len(observation) - 1:
                         next_obs = observation[j + 1]
                         fwd_t_j = fwd[:, j].reshape(-1, 1) # need to reshape/transpose because these are flat and won't broadcast correctly
-                        print(fwd_t_j.shape)
                         em = self.emit_matrix[:, next_obs].reshape(1, -1) # column of the emission matrix corresponding with j + 1. also need to reshape
-                        print(em.shape)
                         bwd_j = bwd[:, j + 1] # next col of backwards matrix
-                        print(bwd_j.shape)
                         trans_adj = fwd_t_j + self.trans_matrix + em + bwd_j - p_seq
-                        input()
                         '''
                         What is trans_adj? (assuming 3 states)
 
