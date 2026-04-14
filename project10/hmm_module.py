@@ -387,7 +387,7 @@ Available methods: {dir(HMMModel)}
                 p_seq = logsumexp(fwd[:, -1])
                 gamma = fwd + bwd - p_seq #normalizing only by the probability of the sequence in this code
                                           #could have normalized by summing up "outer" like marcus did but this seemed more complicated
-
+                
                 prob_avg.append(p_seq)
                 
                 # outer = logsumexp([outer, p_seq]) # update outer # old code with double normalization just for reference
@@ -404,15 +404,19 @@ Available methods: {dir(HMMModel)}
                     if j < len(observation) - 1:
                         next_obs = observation[j + 1]
                         fwd_t_j = fwd[:, j].reshape(-1, 1) # need to reshape/transpose because these are flat and won't broadcast correctly
+                        print(fwd_t_j.shape)
                         em = self.emit_matrix[:, next_obs].reshape(1, -1) # column of the emission matrix corresponding with j + 1. also need to reshape
+                        print(em.shape)
                         bwd_j = bwd[:, j + 1] # next col of backwards matrix
+                        print(bwd_j.shape)
                         trans_adj = fwd_t_j + self.trans_matrix + em + bwd_j - p_seq
+                        input()
                         '''
                         What is trans_adj? (assuming 3 states)
 
-                        [fwd_j]     [trans_00][trans_01][trans_02]
-                        [fwd_j]  x  [trans_10][trans_11][trans_12]  x  [emit_j+1][emit_j+1][emit_j+1]  x  [bwd_j+1][bwd_j+1][bwd_j+1]  /  p_seq (scalar)
-                        [fwd_j]     [trans_20][trans_21][trans_22]
+                        [fwd_1j][fwd_1j][fwd_1j]     [trans_00][trans_01][trans_02]     [emit_1j+1][emit_2j+1][emit_3j+1]     [bwd_1j+1][bwd_2j+1][bwd_3j+1]
+                        [fwd_2j][fwd_2j][fwd_2j]  x  [trans_10][trans_11][trans_12]  x  [emit_1j+1][emit_2j+1][emit_3j+1]  x  [bwd_1j+1][bwd_2j+1][bwd_3j+1]  /  p_seq (scalar)
+                        [fwd_3j][fwd_3j][fwd_3j]     [trans_20][trans_21][trans_22]     [emit_1j+1][emit_2j+1][emit_3j+1]     [bwd_1j+1][bwd_2j+1][bwd_3j+1]
 
                         flipped         transition matrix               column of emission matrix flipped   backward column (flat by default)
                         fwd jth
