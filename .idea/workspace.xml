@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="092ef348-22cf-4bba-b4ca-285daba340f1" name="Changes" comment="Finalized Project 10 Implementation">
-      <change afterPath="$PROJECT_DIR$/project10/dict_maker.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project10/HMM_Project10_Execution.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/project10/HMM_Project10_Execution.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,7 +54,7 @@
     "Python.project10.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "#12 on Project10__PR",
+    "git-widget-placeholder": "Project10__PR",
     "last_opened_file_path": "/Users/biotechiestefnie/Desktop/HMM-Class-of-Algorithms/Project09",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -135,7 +135,8 @@
       <workItem from="1776226702788" duration="62000" />
       <workItem from="1776226769221" duration="13390000" />
       <workItem from="1776240209978" duration="1696000" />
-      <workItem from="1776241920319" duration="2949000" />
+      <workItem from="1776241920319" duration="3150000" />
+      <workItem from="1776247929374" duration="5152000" />
     </task>
     <task id="LOCAL-00001" summary="Finalized Project 10 Implementation">
       <option name="closed" value="true" />
