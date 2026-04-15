@@ -205,7 +205,9 @@ This week's Baum-Welch algorithm was more challenging for me to grasp compared t
 
 ### Collaborators: Eric Arnold
 
+I found marcus's video on this to be helpful where he showed his implementaiton with dictionaries. An issue I had coming into the algorithm was assuming that the updates would happen incrementally by adding or subtracting values from the matrices. Instead, we take the posterior probability in gamma and add that to the emission and transition matrices, roughly speaking. By adding probabilities to those values, we are essentially saying "what was most probable about this sequence should become more probable." Because HMMs are relatively simple, we can just apply the model to the sequences directly (as opposed to other machine learning models that use some sort of gradient descent.) This is very elegant.
 
+One thing that I struggled with and still struggle with is the logic of the transition matrix update. It's interesting that forward and backwards play different roles in this calculation since you're indexing the previous observation in fwd and the next in bwd. We need to expand these probability vectors so that we can apply them to all states that we are going to and coming from in the transition matrix, hence the different dimensions and reshape operations. I'd like to go back to the math on this since I don't fully understand what's happening at this step. It's interesting that this process is taking place unidirectionally, and we are not computing and combining our adjustments from both directions as in fwd-bwd. Perhaps the use of both probability vectors accounts for this. But DNA is also reversible, so I wonder if it is worthwhile to flip the direction and see if that produces a more robust model.
 
 
 ### Generative AI Appendix
