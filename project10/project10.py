@@ -185,8 +185,8 @@ class HMMModel:
             total_log_prob (float): log P(observation)
         """
 
-        # Initialise the forward matrix with 0s
-        fwd_matrix = self.initialise_matrix(observation, 0, np.float64)
+        # Initialise the forward matrix with -np.inf
+        fwd_matrix = self.initialise_matrix(observation, -np.inf, np.float64)
 
         # Getting the first character from the observation sequence
         first_char = observation[0]
@@ -194,12 +194,7 @@ class HMMModel:
         # Getting the emission prob for the first character
         initial_col = self.emit_matrix[:, first_char]
 
-        key_list = list(self.initial_probs.keys())
-
-        for i in range(len(self.initial_probs)):
-            # Aligning the initial prob keys to the index
-            state_i = key_list[i]
-            # First column calculation
+        for i, state_i in enumerate(self.states):
             fwd_matrix[i, 0] = np.log(self.initial_probs[state_i]) + initial_col[i]
 
         for j in range(1, len(observation)):
@@ -243,10 +238,8 @@ class HMMModel:
 
             for i, state in enumerate(self.states):
                 prev_scores = bwd_matrix[:, j - 1]
-                # column slice
-                transitions = self.trans_matrix[:, state]
-                emission = emit_col[i]
-                scores = prev_scores + transitions + emission
+                transitions = self.trans_matrix[state, :]  # out-transitions from state i
+                scores = prev_scores + transitions + emit_col  # emit at destination states
                 bwd_matrix[i, j] = np.logaddexp.reduce(scores)
 
         # Reverse back the matrix
@@ -281,7 +274,7 @@ class HMMModel:
         return self.states[state_indices], forward_backward_matrix
 
 
-    def baum_welch(self, observation, n_iter=10):
+    def baumwelch_algorithm(self, observation, n_iter=1000):
         """
         Run Baum-Welch (EM) to re-estimate HMM parameters from a single observation sequence.
         Parameters:
@@ -293,81 +286,95 @@ class HMMModel:
             new_emission_probs (dict:dict): Updated emission probabilities.
         """
 
-        # Ensure observation is valid
+        # validate observation
         observation = self.validate_observation(observation)
+
+        # extract dimensions and lists
         T = len(observation)
         num_states = len(self.states)
         states = list(self.states)
         symbols = sorted(self.valid_chars)
 
+        # Initialize to make available when called outside loop
+        new_initial_probs = None
+        new_transition_probs = None
+        new_emission_probs = None
+
         for _ in range(n_iter):
-            # E-step: compute forward and backward matrices
+            # E-step: forward and backward
             fwd_matrix, total_log_prob = self.forward_algorithm(observation)
             bwd_matrix = self.backward_algorithm(observation)
 
-            # gamma[i, t] = P(state_i at time t | observation)
-            gamma = np.zeros((num_states, T), dtype=np.float64)
-
+            # E-step: compute log-gamma
+            log_gamma = np.zeros((num_states, T), dtype=np.float64)
             for t in range(T):
+                log_norm_t = np.logaddexp.reduce(fwd_matrix[:, t] + bwd_matrix[:, t])
                 for i in range(num_states):
-                    gamma[i, t] = np.exp(fwd_matrix[i, t] + bwd_matrix[i, t] - total_log_prob)
+                    log_gamma[i, t] = fwd_matrix[i, t] + bwd_matrix[i, t] - log_norm_t
 
-            # xi[i, j, t] = P(state_i at t, state_j at t+1 | observation)
-            xi = np.zeros((num_states, num_states, T - 1), dtype=np.float64)
-
+            # E-step: compute log-xi
+            log_xi = np.zeros((num_states, num_states, T - 1), dtype=np.float64)
             for t in range(T - 1):
                 next_char = observation[t + 1]
-                emit_next = self.emit_matrix[:, next_char]  # log P(obs_{t+1} | state_j)
+                emit_next = np.array([self.emit_matrix[si, next_char] for si in states])
 
+                # compute unnormalized log-xi
                 for i, si in enumerate(states):
                     for j, sj in enumerate(states):
-                        trans_ij = self.trans_matrix[si, sj]  # log P(sj | si)
-                        xi[i, j, t] = np.exp(
-                            fwd_matrix[i, t]
-                            + trans_ij
-                            + emit_next[j]
-                            + bwd_matrix[j, t + 1]
-                            - total_log_prob
+                        log_xi[i, j, t] = (
+                                fwd_matrix[i, t]
+                                + self.trans_matrix[si, sj]
+                                + emit_next[j]
+                                + bwd_matrix[j, t + 1]
                         )
 
-            # M-step: re-estimate initial, transition, and emission probabilities
+                # normalize across all i,j for this t
+                log_norm_t = np.logaddexp.reduce(log_xi[:, :, t].ravel())
+                log_xi[:, :, t] -= log_norm_t
 
-            # Initial probabilities: gamma at time 0
+            # M-step: update initial probabilities using log-gamma at t=0
             new_initial_probs = {}
-            gamma_t0 = gamma[:, 0]
-            gamma_t0_sum = gamma_t0.sum()
+            log_gamma_t0 = log_gamma[:, 0]
+            log_norm = np.logaddexp.reduce(log_gamma_t0)
             for i, si in enumerate(states):
-                new_initial_probs[si] = gamma_t0[i] / gamma_t0_sum if gamma_t0_sum > 0 else 0.0
+                val = log_gamma_t0[i] - log_norm
+                if np.isneginf(val):
+                    val = np.log(1e-12)
+                new_initial_probs[si] = float(np.exp(val))
 
-            # Transition probabilities
+            # M-step: update transition probabilities using log-xi and log-gamma
             new_transition_probs = {}
             for i, si in enumerate(states):
                 new_transition_probs[si] = {}
-                # numerator: sum_t xi[i, j, t]
-                # denominator: sum_t gamma[i, t] for t = 0..T-2
-                denom = gamma[i, :-1].sum()
-                for j, sj in enumerate(states):
-                    numer = xi[i, j, :].sum()
-                    new_transition_probs[si][sj] = numer / denom if denom > 0 else 0.0
+                log_denom = np.logaddexp.reduce(log_gamma[i, :-1])
 
-            # Emission probabilities
+                for j, sj in enumerate(states):
+                    log_numer = np.logaddexp.reduce(log_xi[i, j, :])
+                    if np.isneginf(log_numer):
+                        log_numer = np.log(1e-12)
+                    new_transition_probs[si][sj] = float(np.exp(log_numer - log_denom))
+
+            # M-step: update emission probabilities using log-gamma
             new_emission_probs = {}
             for i, si in enumerate(states):
                 new_emission_probs[si] = {}
-                denom = gamma[i, :].sum()
-                for sym in symbols:
-                    numer = 0.0
-                    for t in range(T):
-                        if observation[t] == sym:
-                            numer += gamma[i, t]
-                    new_emission_probs[si][sym] = numer / denom if denom > 0 else 0.0
+                log_denom = np.logaddexp.reduce(log_gamma[i, :])
 
-            # Update model in-place for next iteration
+                for sym in symbols:
+                    mask = [t for t in range(T) if observation[t] == sym]
+                    if mask:
+                        log_numer = np.logaddexp.reduce(log_gamma[i, mask])
+                    else:
+                        log_numer = np.log(1e-12)
+
+                    new_emission_probs[si][sym] = float(np.exp(log_numer - log_denom))
+
+            # update model parameters for next EM iteration
             self.initial_probs = new_initial_probs
             self.transition_probs = new_transition_probs
             self.emission_probs = new_emission_probs
             self.trans_matrix = StrMatrix(self.transition_probs)
             self.emit_matrix = StrMatrix(self.emission_probs)
 
-        # After n_iter, return the final re-estimated parameters for tracking/comparison
+        # return final parameter estimates
         return new_initial_probs, new_transition_probs, new_emission_probs
