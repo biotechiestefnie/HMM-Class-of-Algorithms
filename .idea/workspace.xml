@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="092ef348-22cf-4bba-b4ca-285daba340f1" name="Changes" comment="Finalized Project 10 Implementation">
+      <change beforePath="$PROJECT_DIR$/project10/HMM_Project10_Execution.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/project10/HMM_Project10_Execution.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project10/genome_data.parquet" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project10/hmm_module.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project10/project10_notebook.ipynb" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Jupyter Notebook" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;biotechiestefnie&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/biotechiestefnie/HMM-Class-of-Algorithms.git&quot;,
+    &quot;accountId&quot;: &quot;bf65aa8d-10b5-4211-b4ec-203809e0139f&quot;
+  },
+  &quot;editorReviewEnabled&quot;: false
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="3C3AwPCPHsTHDBJ3JE8uG8FET8l" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="sortKey" value="BY_TIME_ASCENDING" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.project10.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;#12 on Project10__PR&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/biotechiestefnie/Desktop/HMM-Class-of-Algorithms/Project09&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.fileTypes&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Project09" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="HMM-Class-of-AlgorithmsOLD" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-PY-243.26053.29" />
+        <option value="bundled-python-sdk-b1dbf8ef85a6-4df51de95216-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-243.26053.29" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="092ef348-22cf-4bba-b4ca-285daba340f1" name="Changes" comment="" />
+      <created>1775604118008</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1775604118008</updated>
+      <workItem from="1775604119050" duration="11690000" />
+      <workItem from="1775629331603" duration="6712000" />
+      <workItem from="1775636122279" duration="7178000" />
+      <workItem from="1775680838801" duration="4510000" />
+      <workItem from="1775694601311" duration="5434000" />
+      <workItem from="1775701952943" duration="1527000" />
+      <workItem from="1776114131224" duration="3376000" />
+      <workItem from="1776119978844" duration="5055000" />
+      <workItem from="1776128011892" duration="3848000" />
+      <workItem from="1776132583791" duration="2497000" />
+      <workItem from="1776135092746" duration="2820000" />
+      <workItem from="1776137926628" duration="2223000" />
+      <workItem from="1776140160727" duration="1903000" />
+      <workItem from="1776190049473" duration="5828000" />
+      <workItem from="1776196356089" duration="3394000" />
+      <workItem from="1776212452252" duration="1458000" />
+      <workItem from="1776223078751" duration="310000" />
+      <workItem from="1776223509702" duration="400000" />
+      <workItem from="1776223918569" duration="133000" />
+      <workItem from="1776224058396" duration="2197000" />
+      <workItem from="1776226621687" duration="8000" />
+      <workItem from="1776226702788" duration="62000" />
+      <workItem from="1776226769221" duration="13390000" />
+      <workItem from="1776240209978" duration="1696000" />
+      <workItem from="1776241920319" duration="1685000" />
+    </task>
+    <task id="LOCAL-00001" summary="Finalized Project 10 Implementation">
+      <option name="closed" value="true" />
+      <created>1776243000080</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1776243000080</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TerminalProjectNonSharedOptionsProvider">
+    <option name="startingDirectory" value="$PROJECT_DIR$/../Final-Problem-Set" />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/Project09_PR" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Finalized Project 10 Implementation" />
+    <option name="LAST_COMMIT_MESSAGE" value="Finalized Project 10 Implementation" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/HMM_Class_of_Algorithms$project10.coverage" NAME="project10 Coverage Results" MODIFIED="1776195871568" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/project10" />
+  </component>
+</project>
