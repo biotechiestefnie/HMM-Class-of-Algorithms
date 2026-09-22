@@ -24,9 +24,8 @@ This collaborative project spanned four weeks and entailed the demonstration of 
 In order to build a HMM you need:
 
 - Hidden States
-- 
-- Transition Matrix: The pprobability of going from one state to another is captured in a Transition Matrix. This matrix must also be row stochastic meaning that the
-                     probabilities from one state to any other state in the chain (each row in the matrix) must sum to one.
+   
+- Transition Matrix: The probability of going from one state to another is captured in a Transition Matrix. This matrix must also be row stochastic meaning that the probabilities from one state to any other state in the chain (each row in the matrix) must sum to one.
   
 - Sequence of Observations: An ordered chain of visible data points or symbols emitted by the system over discrete time steps
 
@@ -35,6 +34,12 @@ In order to build a HMM you need:
 - Initial Probability Distribution: A vector (π) that defines the probability of the system starting in each hidden state at time step zero or one
 
 
+### Vetirbi Algorithm
 
-The Viterbi algorithm is an efficient method of finding a sequence z1,...,zn with maximal probability given x1,...,xn, that is, finding z(1:n) ∈ argmax z1:n p(z1:n|x1:n).
+The Viterbi algorithm is a dynamic programming algorithm that finds the most likely sequence of hidden events that would explain a sequence of observed events. The result of the algorithm is often called the Viterbi path. It is most commonly used with HMMs. Viterbi path and Viterbi algorithm have become standard terms for the application of dynamic programming algorithms to maximization problems involving probabilities. Given a hidden Markov model with a set of hidden states S, a set of possible emissions (observations) M, and a sequence of T observations o0,o1,…,oT−1, the Viterbi algorithm finds the most likely sequence of hidden states that could have produced those observations. At each time step t, the algorithm solves the subproblem where only the observations up to ot are considered.
+
+Two matrices of size T×|S| are constructed:
+Pt,s contains the maximum probability of ending up at state s at observation t, out of all possible sequences of states leading up to it. Qt,s tracks the previous state that was used before s in this maximum probability state sequence. Let πs and ar,s be the initial and transition probabilities respectively, and let bs,o be the probability of observing o at state s. Then the values of P are given by the recurrence relation:
+
+    
 
