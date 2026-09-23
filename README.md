@@ -36,10 +36,88 @@ In order to build a HMM you need:
 
 ### Vetirbi Algorithm
 
-The Viterbi algorithm is a dynamic programming algorithm that finds the most likely sequence of hidden events that would explain a sequence of observed events. The result of the algorithm is often called the Viterbi path. It is most commonly used with HMMs. Viterbi path and Viterbi algorithm have become standard terms for the application of dynamic programming algorithms to maximization problems involving probabilities. Given a hidden Markov model with a set of hidden states S, a set of possible emissions (observations) M, and a sequence of T observations o0,o1,…,oT−1, the Viterbi algorithm finds the most likely sequence of hidden states that could have produced those observations. At each time step t, the algorithm solves the subproblem where only the observations up to ot are considered.
+The Viterbi path and Viterbi algorithm have become standard terms for the application of dynamic programming algorithms to maximization problems involving probabilities. Given a hidden Markov model with a set of hidden states S, a set of possible emissions (observations) M, and a sequence of T observations o0,o1,…,oT−1, the Viterbi algorithm finds the most likely sequence of hidden states that could have produced those observations. At each time step t, the algorithm solves the subproblem where only the observations up to ot are considered.
 
 Two matrices of size T×|S| are constructed:
 Pt,s contains the maximum probability of ending up at state s at observation t, out of all possible sequences of states leading up to it. Qt,s tracks the previous state that was used before s in this maximum probability state sequence. Let πs and ar,s be the initial and transition probabilities respectively, and let bs,o be the probability of observing o at state s. Then the values of P are given by the recurrence relation:
 
-    
+P(t,s) ={ πs x b(s,ot)  IF t = 0
+          max(rinsS) (P(t-1,r) x a(r,s) x b(s,o(t))  IF t > 0 
+
+The formula for Qt,s is identical for t >0, except that max is replaced with argmax and Q0,s=0. The Viterbi path can be found by selecting the maximum of P at the final timestep, and following Q in reverse.
+
+**PSEUDOCODE**
+
+```
+function Viterbi(states, init, trans, emit, obs) is
+    input states: S hidden states
+    input init: initial probabilities of each state
+    input trans: S × S transition matrix
+    input emit: S × M emission matrix
+    input obs: sequence of T observations
+
+    prob ← T × S matrix of zeroes
+    prev ← empty T × S matrix
+    for each state s in states do
+        prob[0][s] = init[s] * emit[s][obs[0]]
+
+    for t = 1 to T - 1 inclusive do // t = 0 has been dealt with already
+        for each state s in states do
+            for each state r in states do
+                new_prob ← prob[t - 1][r] * trans[r][s] * emit[s][obs[t]]
+                if new_prob > prob[t][s] then
+                    prob[t][s] ← new_prob
+                    prev[t][s] ← r
+
+    path ← empty array of length T
+    path[T - 1] ← the state s with maximum prob[T - 1][s]
+    for t = T - 2 to 0 inclusive do
+        path[t] ← prev[t + 1][path[t + 1]]
+
+    return path
+end
+
+```
+
+The time complexity of the Viterbi algorithm is O(T x |S|^2)
+
+
+### Forward Algorithm
+
+The Forward algorithm, in the context of HMM, is used to calculate the probability of a state at a certain time, given the history of evidence. The process is also known as filtering. The Forward algorithm works the same way as the Viterbi algorithm except we are summing probabilities instead of taking the maximum. The main observation to take away from these algorithms is how to organize Bayesian updates and inference to be computationally efficient in the context of directed graphs of variables. The goal of the forward algorithm is to compute the joint probability (xt, y(1:t)). Once the joint probability is computed, the transition and emission probabilities are easily obtained. Both the state and observation are discrete, finite variables. The HMM's state transition probabilities, observation/emission probabilities, and initial prior probability are known, and the sequence of observations is given. Computing the joint probability would be an intractable problem, as the state sequences grow exponentially with t, so the forward algorithm takes advantage of the conditional independence rules of the hidden Markov model (HMM) to perform the calculation recursively. Forward algorithm uses the conditional indepencence of the sequence steps to calculate partial probabilities.
+
+**PSEUDOCODE**
+
+```
+Initialize t = 0,
+transition probabilities, p(xt|xt−1),
+emission probabilities, p(yt|xt),
+observed sequence, y(1:T)
+prior probability, α(x0)
+
+create the forward probability table 
+
+For t = 1 to T
+   α(xt) = p(yt|xt) ∑xt−1 p(xt|xt−1)α(xt−1)
+
+Return p(xT|y1:T) = α(xT) / ∑xT α(xT)
+```
+
+The complexity of the forward algorithm is O(nm^2), where m is the number of possible states for a latent variable (like the number of weather conditions, and n is the length of the observed sequence. This is a clear reduction from the ad hoc method of exploring all the possible states, which has a complexity O(nm^n)
+
+
+### Backward Algorithm
+
+The Backward algorithm is -exactly- the same as the Forward algorithm, except you begin at the end of the sequence (including the end state) and work your way to the front. In order to calculate the probability that a position be assigned a particular state we need to understand the probability of state transitions from both directions. As a result we need to calculate probability from the reverse direction of the sequence. 
+
+
+
+
+
+
+
+
+
+
+
 
