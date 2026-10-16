@@ -45,30 +45,32 @@ The formula for Qt,s is identical for t >0, except that max is replaced with arg
 **PSEUDOCODE**
 
 ```
-function Viterbi(states, init, trans, emit, obs) is
+
+function viterbi(states, init, trans, emit, obs):
+
     input states: S hidden states
     input init: initial probabilities of each state
     input trans: S × S transition matrix
     input emit: S × M emission matrix
     input obs: sequence of T observations
 
-    prob ← T × S matrix of zeroes
-    prev ← empty T × S matrix
+    prob <- T x S matrix of zeroes
+    prev <- empty T x S matrix
     for each state s in states do
-        prob[0][s] = init[s] * emit[s][obs[0]]
+        prob[0][s] = init[s] x emit[s][obs[0]]
 
     for t = 1 to T - 1 inclusive do // t = 0 has been dealt with already
         for each state s in states do
             for each state r in states do
-                new_prob ← prob[t - 1][r] * trans[r][s] * emit[s][obs[t]]
+                new_prob <- prob[t - 1][r] x trans[r][s] x emit[s][obs[t]]
                 if new_prob > prob[t][s] then
-                    prob[t][s] ← new_prob
-                    prev[t][s] ← r
+                    prob[t][s] <- new_prob
+                    prev[t][s] <- r
 
-    path ← empty array of length T
-    path[T - 1] ← the state s with maximum prob[T - 1][s]
+    path <- empty array of length T
+    path[T - 1] <- the state s with maximum prob[T - 1][s]
     for t = T - 2 to 0 inclusive do
-        path[t] ← prev[t + 1][path[t + 1]]
+        path[t] <- prev[t + 1][path[t + 1]]
 
     return path
 end
@@ -85,18 +87,22 @@ The Forward algorithm, in the context of HMM, is used to calculate the probabili
 **PSEUDOCODE**
 
 ```
-Initialize t = 0,
-transition probabilities, p(xt|xt−1),
-emission probabilities, p(yt|xt),
-observed sequence, y(1:T)
-prior probability, α(x0)
 
-create the forward probability table 
+function forward:
 
-For t = 1 to T
-   α(xt) = p(yt|xt) ∑xt−1 p(xt|xt−1)α(xt−1)
+    Initialize t = 0,
+    transition probabilities, p(xt|xt−1),
+    emission probabilities, p(yt|xt),
+    observed sequence, y(1:T)
+    prior probability, α(x0)
+
+    create the forward probability table 
+
+    For t = 1 to T
+        α(xt) = p(yt|xt) ∑xt−1 p(xt|xt−1)α(xt−1)
 
 Return p(xT|y1:T) = α(xT) / ∑xT α(xT)
+
 ```
 
 The complexity of the forward algorithm is O(nm^2), where m is the number of possible states for a latent variable (like the number of weather conditions, and n is the length of the observed sequence. This is a clear reduction from the ad hoc method of exploring all the possible states, which has a complexity O(nm^n)
@@ -110,8 +116,8 @@ We start by setting the backward probability of each state at the final time ste
 
 For each preceding time step t (from T−1 to 1), we calculate the backward probability of each state i. This is done by summing over the products of the backward probabilities of each possible next state j, the transition probability from the current state i to that next state j, and the emission probability of the next observation given that next state j. Mathematically, this is represented as:
 
-                  *Bi*(t) = Sum of from j to S(*Bj*(t + 1) x aij x *bj*(Ot+1)
-
+                  *Bi*(t) = ∑ (*Bj*(t + 1) x αij x *bj*(Ot+1)
+                           jtoS
 where: 
 
 *Bi*(t) is the backward probability for state i at time t 
@@ -120,7 +126,7 @@ S is the set of all possible states
 
 *Bj*(t + 1) is the backward probability of state j at time t+1
 
-aij is the transition state i to state j
+αij is the transition state i to state j
 
 *bj*(Ot+1) is the probability of observing Ot+1 given j
 
@@ -128,7 +134,23 @@ For each preceding time step (from 2 to 1), the backward probability of each sta
 
 The total probability of the observed sequence is calculated by summing over the products of the initial state probabilities, the emission probabilities of the first observation given each state, and the backward probabilities of each state at the first time step. This constitutes the termination, and all contributions are summed to get the total probability of the observed sequence.
 
+**PSEUDOCODE**
 
+```
+
+function bwd:
+    initialize zeros matrix of size n_states x observations
+    reverse observations
+    
+    set first col to 0 (which is a probability of 1)
+    
+    for col in remaining cols: # same loop as the first time except everything is backwards and the start is 1
+        for state in states:
+            matrix[row][col] = log_sum_exp(prev_score[row][prev_col] x transition_matrix[state][row] x emission_matrix[state][observation])
+    
+    return matrix
+
+```
 
 
 
