@@ -46,34 +46,55 @@ The formula for Qt,s is identical for t >0, except that max is replaced with arg
 
 ```
 
-function viterbi(states, init, trans, emit, obs):
+CLASS HMMModel:
 
-    input states: S hidden states
-    input init: initial probabilities of each state
-    input trans: S × S transition matrix
-    input emit: S × M emission matrix
-    input obs: sequence of T observations
+    METHOD __init__(initial_probabilities, transition_probabilities, emission_probabilities):
+        Store the initial, transition, and emission probability dictionaries
+        Extract list of states
+        Convert all probabilities to natural log values
+        Replace any zero probabilities with negative infinity
 
-    prob <- T x S matrix of zeroes
-    prev <- empty T x S matrix
-    for each state s in states do
-        prob[0][s] = init[s] x emit[s][obs[0]]
+    METHOD viterbi_algorithm(observation_sequence):
 
-    for t = 1 to T - 1 inclusive do // t = 0 has been dealt with already
-        for each state s in states do
-            for each state r in states do
-                new_prob <- prob[t - 1][r] x trans[r][s] x emit[s][obs[t]]
-                if new_prob > prob[t][s] then
-                    prob[t][s] <- new_prob
-                    prev[t][s] <- r
+        Determine the number of states and the length of the observation sequence
 
-    path <- empty array of length T
-    path[T - 1] <- the state s with maximum prob[T - 1][s]
-    for t = T - 2 to 0 inclusive do
-        path[t] <- prev[t + 1][path[t + 1]]
+        Create a Viterbi matrix with one row per state and one column per observation
+        Create a traceback matrix with the same dimensions
 
-    return path
-end
+        For the first observation:
+            For each state:
+                Retrieve the initial probability for that state
+                Retrieve the emission probability for first observation character
+                Convert both to log values
+                Add them (because using natural log) and store result in first column of Viterbi matrix
+                Store placeholder in traceback matrix
+
+        For each remaining observation position:
+            For each current state:
+                Retrieve the emission probability for the current symbol and convert to ln
+                For each possible previous state:
+                    Retrieve previous Viterbi score
+                    Retrieve transition probability from previous state to current state
+                    Convert transition probability to ln
+                    Compute: previous score + log transition + log emission
+                Identify previous state yielding maximum total
+                Store this maximum in Viterbi matrix
+                Store index of maximizing previous state in traceback matrix
+
+        Identify state with highest log‑probability in final column
+
+        Create empty list for optimal path
+        Append final state
+
+        Move backward through traceback matrix:
+            At each column, use stored previous‑state index to determine state that led here
+            Append that state to path
+            Continue until reaching first column
+
+        Reverse path to run from first observation to last
+
+        Return Viterbi matrix, traceback matrix, and optimal state path.
+
 
 ```
 
