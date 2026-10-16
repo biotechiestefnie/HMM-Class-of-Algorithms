@@ -7,31 +7,26 @@ Hidden Markov Models Virtibi, Forward, Backward, and Forward-Backwards Algorithm
 
 This collaborative project spanned four weeks and entailed the demonstration of five core dynamic programming methods used to analyze and train Hidden Markov Models (HMMs). In probability theory, an HMM is a Markov model in which the observations are dependent on a latent Markov process (referred to as X). HMMs are are a surprisingly powerful tool for modeling a wide range of sequential data, making them well-suited for genomic sequence analysis. The hidden and observable states of an HMM can be defined as sequences of random variables, meaning it is stochastic.
 
-* The Hidden States: The actual conditions or causes driving the system, which cannot directly be seen. For example, the weather might be "Sunny" or "Rainy" inside a room with no windows. The hidden states collectively form a Markov Chain, as in, chaining together multiple hidden states that are traversed over time in order to reach an outcome. This is a probabilistic process because all the parameters of the Markov Chain, as well as the score of each sequence, are in fact probabilities.
 
-* The Observations: The visible data or outputs that can be measured. For example, whether a person carries an umbrella or not.
+## Background: Components of the Hidden Markov Model
 
-* The Markov Assumption: The rule that the next hidden state depends only on the current state, not on any past history. Therefore, each observation is only dependent on the state that produced it, and is completely independent from any other state in the chain.
+* Hidden States: The actual conditions or causes driving the system, which cannot directly be seen. The hidden states collectively form a Markov Chain, as in, chaining together multiple hidden states that are traversed over time in order to reach an outcome. This is a probabilistic process because all the parameters of the Markov Chain, as well as the score of each sequence, are in fact probabilities.
 
+* Observations: The visible data or outputs that can be measured. 
 
-**Core Probabilities**
+* Markov Assumption: The rule that the next hidden state depends only on the current state, not on any past history. Therefore, each observation is only dependent on the state that produced it, and is completely independent from any other state in the chain.
 
-* Transition Probabilities: The odds of moving from one hidden state to another (e.g., how likely a rainy day is to follow a sunny day).
+* Transition Probabilities: The odds of moving from one hidden state to another.
 
-* Emission Probabilities: The odds of seeing a specific observation while in a particular hidden state (e.g., how likely someone is to carry an umbrella when it is raining)
+* Transition Matrix: The probability of going from one state to another is captured in a Transition Matrix. This matrix must also be row stochastic meaning that the probabilities from one state to any other state in the chain (each row in the matrix) must sum to one.
 
+* Emission Probabilities: The odds of seeing a specific observation while in a particular hidden state.
 
-In order to build a HMM you need:
+* Initial Probability Distribution: A vector (π) that defines the probability of the system starting in each hidden state at time step zero or one.
 
-- Hidden States
-   
-- Transition Matrix: The probability of going from one state to another is captured in a Transition Matrix. This matrix must also be row stochastic meaning that the probabilities from one state to any other state in the chain (each row in the matrix) must sum to one.
-  
-- Sequence of Observations: An ordered chain of visible data points or symbols emitted by the system over discrete time steps
+* Sequence of Observations: An ordered chain of visible data points or symbols emitted by the system over discrete time steps.
 
-- Observation Likelihood Matrix: A table of probabilities that shows how likely each visible output or symbol is to be generated from a specific hidden state. It is also commonly called the emission probability matrix or state-observation matrix.
-
-- Initial Probability Distribution: A vector (π) that defines the probability of the system starting in each hidden state at time step zero or one
+* Observation Likelihood Matrix: A table of probabilities that shows how likely each visible output or symbol is to be generated from a specific hidden state. It is also commonly called the emission probability matrix or state-observation matrix.
 
 
 ### Vetirbi Algorithm
@@ -45,6 +40,7 @@ P(t,s) ={ πs x b(s,ot)  IF t = 0
           max(rinsS) (P(t-1,r) x a(r,s) x b(s,o(t))  IF t > 0 
 
 The formula for Qt,s is identical for t >0, except that max is replaced with argmax and Q0,s=0. The Viterbi path can be found by selecting the maximum of P at the final timestep, and following Q in reverse.
+
 
 **PSEUDOCODE**
 
@@ -108,12 +104,29 @@ The complexity of the forward algorithm is O(nm^2), where m is the number of pos
 
 ### Backward Algorithm
 
-The Backward algorithm is -exactly- the same as the Forward algorithm, except you begin at the end of the sequence (including the end state) and work your way to the front. In order to calculate the probability that a position be assigned a particular state we need to understand the probability of state transitions from both directions. As a result we need to calculate probability from the reverse direction of the sequence. 
+The Backward algorithm is -exactly- the same as the Forward algorithm, except calculations begin at the end of the sequence (including the end state) and work towards the front. The output of this algorithms represents the probability of being in a certain state at a certain time, given all future observations In order to calculate the probability that a position be assigned a particular state the probability of state transitions from both directions needs to be understood. As a result the probability from the reverse direction of the sequence must be claculated. 
 
+We start by setting the backward probability of each state at the final time step to 1. The reason we initialize the backward probabilities to 1 at the final time step in the Backward Algorithm is because we define the backward probability as the probability of the future observations given the current state. At the final time step, there are no future observations because we’ve reached the end of the sequence. Therefore, the probability of observing the “empty” sequence of future observations given any current state is 1. This is a convention used to simplify the calculations and provide a base case for the recursion in the Backward Algorithm. Mathematically, this can be represented as: βi​(T)=1 for all states i, where T is the final time step.
 
+For each preceding time step t (from T−1 to 1), we calculate the backward probability of each state i. This is done by summing over the products of the backward probabilities of each possible next state j, the transition probability from the current state i to that next state j, and the emission probability of the next observation given that next state j. Mathematically, this is represented as:
 
+                  *Bi*(t) = Sum of from j to S(*Bj*(t + 1) x aij x *bj*(Ot+1)
 
+where: 
 
+*Bi*(t) is the backward probability for state i at time t 
+
+S is the set of all possible states
+
+*Bj*(t + 1) is the backward probability of state j at time t+1
+
+aij is the transition state i to state j
+
+*bj*(Ot+1) is the probability of observing Ot+1 given j
+
+For each preceding time step (from 2 to 1), the backward probability of each state is calculated. This is done by summing over the products of the backward probabilities of each possible next state, the transition probability from the current state to that next state, and the emission probability of the next observation given that next state.
+
+The total probability of the observed sequence is calculated by summing over the products of the initial state probabilities, the emission probabilities of the first observation given each state, and the backward probabilities of each state at the first time step. This constitutes the termination, and all contributions are summed to get the total probability of the observed sequence.
 
 
 
