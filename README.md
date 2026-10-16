@@ -93,8 +93,7 @@ CLASS HMMModel:
 
         Reverse path to run from first observation to last
 
-        Return Viterbi matrix, traceback matrix, and optimal state path.
-
+        Return Viterbi matrix, traceback matrix, and optimal state path
 
 ```
 
@@ -109,20 +108,20 @@ The Forward algorithm, in the context of HMM, is used to calculate the probabili
 
 ```
 
-function forward:
+function fwd:
 
-    Initialize t = 0,
-    transition probabilities, p(xt|xt−1),
-    emission probabilities, p(yt|xt),
-    observed sequence, y(1:T)
-    prior probability, α(x0)
+    initialize zeros matrix of size n_states x observations
+    
+    find first_col probabilities
+    
+    for col in remaining cols:
 
-    create the forward probability table 
-
-    For t = 1 to T
-        α(xt) = p(yt|xt) ∑xt−1 p(xt|xt−1)α(xt−1)
-
-Return p(xT|y1:T) = α(xT) / ∑xT α(xT)
+        for state in states:
+            matrix[row][col] = log_sum_exp(prev_score[row][prev_col]
+                               x transition_matrix[state][row]
+                               x emission_matrix[state][observation])
+    
+    return matrix, log_sum_exp(matrix[last_column])
 
 ```
 
@@ -160,14 +159,18 @@ The total probability of the observed sequence is calculated by summing over the
 ```
 
 function bwd:
+
     initialize zeros matrix of size n_states x observations
     reverse observations
     
     set first col to 0 (which is a probability of 1)
     
     for col in remaining cols: # same loop as the first time except everything is backwards and the start is 1
+
         for state in states:
-            matrix[row][col] = log_sum_exp(prev_score[row][prev_col] x transition_matrix[state][row] x emission_matrix[state][observation])
+            matrix[row][col] = log_sum_exp(prev_score[row][prev_col]
+                               x transition_matrix[state][row]
+                               x emission_matrix[state][observation])
     
     return matrix
 
@@ -196,7 +199,135 @@ function fwd-bwd:
 
 ```
 
+## Baum-Welch Algorithm
 
+Baum–Welch is a method that allows a Hidden Markov Model to learn its own parameters directly from data, even when the hidden states are never observed. When the initial, transition, and emission probabilities are unknown, Baum–Welch repeatedly analyzes the observed sequence and adjusts the model so that the sequence becomes more likely under the model. In other words, it tunes the HMM to explain the data as well as possible.
 
+To do this, the algorithm first uses the current version of the model to compute how the hidden states behave in expectation across the entire observation sequence. It does this by running the forward and backward algorithms, which together, provide a robust prediction of how likely each state is at each position, and how probable each state‑to‑state transition is between positions. Once these expectations are computed, Baum–Welch rebuilds the model’s parameters so that they match what the model predicts happened. Every parameter is recalculated from these expected counts, producing a new version of the HMM that better fits the data.
+
+With each cycle, the model becomes more consistent with the data, and the likelihood of the observed sequence under the model increases. Baum–Welch does not guarantee that the model reaches the absolute best possible parameters, but it does guarantee that each iteration improves or maintains the likelihood. Over time, the HMM converges to a set of parameters that explain the observed sequence as well as the model’s structure allows.
+
+**PSEUDOCODE**
+
+```
+
+function baumwelch(observation, n_iter):
+
+    # validate_observation raises:
+    #   ValueError("Observation contains invalid characters.")
+    #   ValueError("Observation contains characters not in valid_chars.")
+    #   ValueError("Observation sequence is empty.")
+    observation <- validate_observation(observation)
+
+    # initialize variables
+    T <- length(observation)
+    states <- list of states
+    symbols <- sorted list of valid emission symbols
+    num_states <- number of states
+
+    new_initial_probs <- None
+    new_transition_probs <- None
+    new_emission_probs <- None
+
+    for iteration from 1 to n_iter:
+
+        # e-step: forward probabilities
+        # forward_algorithm raises:
+        #   KeyError("State not found in transition matrix.")
+        #   KeyError("Symbol not found in emission matrix.")
+        #   ValueError("Transition probabilities missing for state.")
+        #   ValueError("Emission probabilities missing for state.")
+
+        fwd_matrix, total_log_prob <- ForwardAlgorithm(observation)
+
+        # e-step: backward probabilities
+        # backward_algorithm raises the same errors as forward_algorithm
+
+        bwd_matrix <- backwardalgorithm(observation)
+
+        # e-step: compute gamma
+        create log_gamma[num_states, T]
+        for each time t:
+            log_norm_t <- logsumexp over i of (fwd[i,t] + bwd[i,t])
+
+            for each state i:
+                log_gamma[i,t] <- fwd[i,t] + bwd[i,t] − log_norm_t
+
+        # e-step: compute xi
+        create log_xi[num_states, num_states, T−1]
+        for each time t from 0 to T−2:
+            next_symbol <- observation[t+1]
+
+            # emission lookup raises:
+            #   KeyError(f"Emission probability missing for symbol '{next_symbol}' in state '{state}'.")
+            emit_next[j] <- emission log-prob of next_symbol at state j
+
+            for each state i:
+
+                for each state j:
+
+                    log_xi[i,j,t] <- fwd[i,t]
+                                     + transition_log_prob(i→j)
+                                     + emit_next[j]
+                                     + bwd[j,t+1]
+
+            log_norm_t <- logsumexp of all log_xi[:,:,t]
+            log_xi[:,:,t] <- log_xi[:,:,t] − log_norm_t
+
+        # m-step: update initial probabilities
+        new_initial_probs <- empty dictionary
+        log_gamma_t0 <- log_gamma[:,0]
+        log_norm <- logsumexp(log_gamma_t0)
+
+        for each state i:
+            normalized <- log_gamma_t0[i] − log_norm
+
+            if normalized is -inf: normalized <- log(1e−12)  # Incl pseudo to prevent zero probs
+                new_initial_probs[state_i] <- exp(normalized)
+
+        # m-step: update transition probabilities
+        new_transition_probs <- empty nested dictionary
+
+        for each state i:
+            log_denom <- logsumexp(log_gamma[i,t] for t = 0..T−2)
+
+            for each state j:
+                log_numer <- logsumexp(log_xi[i,j,t] for t = 0..T−2)
+
+                if log_numer is -inf: log_numer <- log(1e−12)  # Incl pseudo to prevent zero probs
+                    new_transition_probs[i][j] <- exp(log_numer − log_denom)
+
+        # m-step: update emission probabilities
+        new_emission_probs <- empty nested dictionary
+
+        for each state i:
+            log_denom <- logsumexp(log_gamma[i,t] for all t)
+
+            for each symbol s in symbols:
+                mask <- all t where observation[t] = s
+
+                if mask not empty:
+                    log_numer <- logsumexp(log_gamma[i,t] for t in mask)
+
+                else:
+                    log_numer <- log(1e−12)  # Incl pseudo to prevent zero probs
+
+                new_emission_probs[i][s] <- exp(log_numer − log_denom)
+
+        # StrMatrix raises:
+        #   ValueError("Transition matrix row missing for state.")
+        #   ValueError("Emission matrix row missing for state.")
+        #   KeyError("Invalid state or symbol in probability dictionary.")
+
+        initial_probs <- new_initial_probs
+        transition_probs <- new_transition_probs
+        emission_probs <- new_emission_probs
+
+        trans_matrix <- StrMatrix(transition_probs)
+        emit_matrix <- StrMatrix(emission_probs)
+
+    return new_initial_probs, new_transition_probs, new_emission_probs
+
+```
 
 
