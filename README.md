@@ -153,6 +153,13 @@ function bwd:
 ```
 
 
+## The Forward-Backward Algorithm
+
+The Forward-Backward algorithm combines both the forward and backward matrices to compute the posterior probability of each 
+state at each position in the final forward-backward matrix. For each cell (i, j) in the forward backward matrix, the posterior 
+is computed as the sum of the log- forward score and log- backward score at that position, minus the total log-probability of the 
+observation sequence. The total log-probability is obtained by applying np.logaddexp.reduce to the last column of either the forward matrix or backwards matrix.
+
 
 
 
